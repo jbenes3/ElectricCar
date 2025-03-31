@@ -1,0 +1,27 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    line-height: 1.6;
+    background: #f9f9f9;
+    color: #333;
+}
+nav a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: #0077cc;
+}
+h1, h2 {
+    color: #222;
+}
+.container {
+    max-width: 900px;
+    margin: auto;
+}
+.viz-placeholder {
+    height: 400px;
+    background: #ddd;
+    text-align: center;
+    padding: 50px;
+    margin: 20px 0;
+    font-style: italic;
+}
