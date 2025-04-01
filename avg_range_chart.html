@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Average EV Range by Model Year</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f8f8f8;
+      padding: 40px;
+    }
+
+    svg {
+      background: white;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      border-radius: 12px;
+    }
+
+    .bar {
+      fill: steelblue;
+      transition: fill 0.3s;
+    }
+
+    .bar:hover {
+      fill: darkorange;
+    }
+
+    .axis text {
+      font-size: 12px;
+    }
+
+    .tooltip {
+      position: absolute;
+      text-align: center;
+      padding: 6px 10px;
+      font-size: 12px;
+      background: #333;
+      color: #fff;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Average Electric Vehicle Range by Model Year</h2>
+<svg width="800" height="500"></svg>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+  d3.json("avg_ev_range.json").then(data => {
+    const svg = d3.select("svg"),
+          tooltip = d3.select("#tooltip"),
+          margin = {top: 50, right: 30, bottom: 50, left: 70},
+          width = +svg.attr("width") - margin.left - margin.right,
+          height = +svg.attr("height") - margin.top - margin.bottom;
+
+    const chart = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleBand()
+        .domain(data.map(d => d.model_year))
+        .range([0, width])
+        .padding(0.15);
+
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.avg_range) * 1.1])
+        .nice()
+        .range([height, 0]);
+
+    // Grid lines
+    chart.append("g")
+        .attr("class", "grid")
+        .call(d3.axisLeft(y).tickSize(-width).tickFormat(""))
+        .selectAll("line")
+        .attr("stroke", "#e0e0e0");
+
+    // Y-axis
+    chart.append("g")
+        .call(d3.axisLeft(y).tickFormat(d => `${d} mi`));
+
+    // X-axis
+    chart.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+    // Bars
+    chart.selectAll(".bar")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", d => x(d.model_year))
+        .attr("y", height) // start at bottom
+        .attr("width", x.bandwidth())
+        .attr("height", 0) // animate in from 0
+        .on("mousemove", function(event, d) {
+          tooltip
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 28) + "px")
+            .style("opacity", 1)
+            .html(`<strong>${d.model_year}</strong><br>${Math.round(d.avg_range)} mi`);
+        })
+        .on("mouseout", function() {
+          tooltip.style("opacity", 0);
+        })
+        .transition()
+        .duration(800)
+        .delay((d, i) => i * 50)
+        .attr("y", d => y(d.avg_range))
+        .attr("height", d => height - y(d.avg_range));
+
+    // X-axis label
+    svg.append("text")
+        .attr("x", margin.left + width / 2)
+        .attr("y", height + margin.top + 40)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .text("Model Year");
+
+    // Y-axis label
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", margin.left / 3)
+        .attr("x", 0 - (margin.top + height / 2))
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .text("Average Range (mi)");
+  });
+</script>
+
+</body>
+</html>
