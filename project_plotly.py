@@ -2,7 +2,6 @@ import pandas as pd
 import plotly.express as px
 import requests
 
-# Load dataset
 df = pd.read_csv("/Users/isabellacaruz/Downloads/DS4200/Electric_Vehicle_Population_Data.csv")
 
 county_counts = df.groupby("County").size().reset_index(name="EV_Count")
@@ -53,14 +52,12 @@ fips_map = {
 county_counts["fips"] = county_counts["County"].map(fips_map)
 county_counts = county_counts.dropna(subset=["fips"])
 
-# Load US counties GeoJSON
 url = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json'
 geojson = requests.get(url).json()
 
 total_evs = county_counts["EV_Count"].sum()
 county_counts["Percent of Total"] = (county_counts["EV_Count"] / total_evs * 100).round(2)
 
-# Plot choropleth map
 fig = px.choropleth(
     county_counts,
     geojson=geojson,
@@ -70,9 +67,9 @@ fig = px.choropleth(
     hover_data={
         "EV_Count": True,
         "Percent of Total": True,
-        "fips": True 
+        "fips": False 
     },
-    color_continuous_scale="Viridis",
+    color_continuous_scale="Blues", 
     scope="usa",
     labels={"EV_Count": "EV Count", "Percent of Total": "% of State Total"},
     title="EV Adoption by County in Washington"
