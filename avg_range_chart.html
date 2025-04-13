@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Average EV Range by Model Year</title>
+  <title>Average EV Range by Model Year (1999 - 2020)</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     body {
@@ -18,16 +18,22 @@
     }
 
     .bar {
-      fill: steelblue;
+      fill: #4A90E2;
       transition: fill 0.3s;
+      cursor: pointer;
     }
 
     .bar:hover {
-      fill: darkorange;
+      fill: #003f5c;
     }
 
-    .axis text {
+    .bar-label {
       font-size: 12px;
+      text-anchor: middle;
+      fill: #003f5c;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s;
     }
 
     .tooltip {
@@ -35,7 +41,7 @@
       text-align: center;
       padding: 6px 10px;
       font-size: 12px;
-      background: #333;
+      background: #003f5c;
       color: #fff;
       border-radius: 4px;
       pointer-events: none;
@@ -52,6 +58,8 @@
 
 <script>
   d3.json("avg_ev_range.json").then(data => {
+    data = data.filter(d => +d.model_year <= 2020);
+
     const svg = d3.select("svg"),
           tooltip = d3.select("#tooltip"),
           margin = {top: 50, right: 30, bottom: 50, left: 70},
@@ -88,24 +96,29 @@
         .call(d3.axisBottom(x).tickFormat(d3.format("d")));
 
     // Bars
-    chart.selectAll(".bar")
+    const bars = chart.selectAll(".bar")
         .data(data)
         .enter()
         .append("rect")
         .attr("class", "bar")
         .attr("x", d => x(d.model_year))
-        .attr("y", height) // start at bottom
+        .attr("y", height)
         .attr("width", x.bandwidth())
-        .attr("height", 0) // animate in from 0
-        .on("mousemove", function(event, d) {
+        .attr("height", 0)
+        .on("mousemove", function(event, d, i) {
+          d3.select(this).attr("fill", "#003f5c");
           tooltip
             .style("left", (event.pageX + 10) + "px")
             .style("top", (event.pageY - 28) + "px")
             .style("opacity", 1)
             .html(`<strong>${d.model_year}</strong><br>${Math.round(d.avg_range)} mi`);
+          chart.selectAll(".bar-label").style("opacity", 0);
+          d3.select(`#label-${d.model_year}`).style("opacity", 1);
         })
         .on("mouseout", function() {
+          d3.select(this).attr("fill", "#4A90E2");
           tooltip.style("opacity", 0);
+          chart.selectAll(".bar-label").style("opacity", 0);
         })
         .transition()
         .duration(800)
@@ -113,7 +126,7 @@
         .attr("y", d => y(d.avg_range))
         .attr("height", d => height - y(d.avg_range));
 
-    // X-axis label
+    // Axis labels
     svg.append("text")
         .attr("x", margin.left + width / 2)
         .attr("y", height + margin.top + 40)
@@ -121,7 +134,6 @@
         .style("font-size", "14px")
         .text("Model Year");
 
-    // Y-axis label
     svg.append("text")
         .attr("transform", "rotate(-90)")
         .attr("y", margin.left / 3)
